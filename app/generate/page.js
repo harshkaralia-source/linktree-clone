@@ -1,28 +1,29 @@
 'use client'
 import { ToastContainer, toast } from "react-toastify";
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-const Generate = () => {
+const GenerateContent = () => {
   const searchParams = useSearchParams();
   const [links, setLinks] = useState([{ link: '', linkText: '' }]);
-  const [handle, setHandle] = useState(searchParams.get('handle'));
+  const [handle, setHandle] = useState('');
   const [pic, setPic] = useState('');
 
+  // Update handle from searchParams inside useEffect
+  useEffect(() => {
+    setHandle(searchParams.get('handle') || '');
+  }, [searchParams]);
+
   const addLink = () => {
-    setLinks(links.concat([{ link: '', linkText: '' }]));
+    setLinks([...links, { link: '', linkText: '' }]);
   };
 
   const handleChange = (index, link, linkText) => {
-    setLinks((initialLinks) => {
-      return initialLinks.map((item, i) => {
-        if (i === index) {
-          return { link, linkText };
-        } else {
-          return item;
-        }
-      });
-    });
+    setLinks((prevLinks) =>
+      prevLinks.map((item, i) =>
+        i === index ? { link, linkText } : item
+      )
+    );
   };
 
   const handleFileChange = (event) => {
@@ -30,39 +31,29 @@ const Generate = () => {
     if (file) {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onloadend = () => {
-        setPic(reader.result);
-      };
+      reader.onloadend = () => setPic(reader.result);
     }
   };
 
-  const submitLinks = async (links, handle, pic) => {
-    var myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
+  const submitLinks = async () => {
+    try {
+      const response = await fetch("/api/add", {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ links, handle, pic }),
+      });
 
-    var raw = JSON.stringify({
-      "links": links,
-      "handle": handle,
-      "pic": pic
-    });
-
-    var requestOptions = {
-      method: 'POST',
-      headers: myHeaders,
-      body: raw,
-      redirect: 'follow'
-    };
-
-    const r = await fetch("/api/add", requestOptions);
-    const result = await r.json();
-
-    if (result.success) {
-      toast.success(result.message);
-      setHandle('');
-      setPic('');
-      setLinks([]);
-    } else {
-      toast.error(result.message);
+      const result = await response.json();
+      if (result.success) {
+        toast.success(result.message);
+        setHandle('');
+        setPic('');
+        setLinks([{ link: '', linkText: '' }]);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Something went wrong!");
     }
   };
 
@@ -75,7 +66,7 @@ const Generate = () => {
             <p className='pb-1 font-light text-[#e9c0ea]'>Step 1: Claim your Handle</p>
             <input
               onChange={e => setHandle(e.target.value)}
-              value={handle || ''}
+              value={handle}
               type="text"
               className='w-fit p-4 rounded-lg focus:border-2 focus:border-double border-white'
               placeholder='Choose a Handle'
@@ -88,7 +79,7 @@ const Generate = () => {
               <span key={index} className='flex flex-col sm:flex-row gap-5'>
                 <input
                   onChange={e => handleChange(index, item.link, e.target.value)}
-                  value={item.linkText || ''}
+                  value={item.linkText}
                   type="text"
                   className='w-fit p-4 rounded-lg focus:border-2 focus:border-double border-white my-2'
                   placeholder='example'
@@ -96,7 +87,7 @@ const Generate = () => {
                 />
                 <input
                   onChange={e => handleChange(index, e.target.value, item.linkText)}
-                  value={item.link || ''}
+                  value={item.link}
                   type="text"
                   className='w-fit p-4 rounded-lg focus:border-2 focus:border-double border-white my-2'
                   placeholder='https://example.com'
@@ -112,7 +103,7 @@ const Generate = () => {
             <span className='flex flex-col'>
               <input
                 onChange={e => setPic(e.target.value)}
-                value={pic || ''}
+                value={pic}
                 type="text"
                 className='w-fit p-4 rounded-lg focus:border-2 focus:border-double border-white'
                 placeholder='Enter link to your Picture'
@@ -123,7 +114,7 @@ const Generate = () => {
                 onChange={handleFileChange}
                 className='w-fit p-4 rounded-lg focus:border-2 focus:border-double border-white mt-2'
               />
-              <button onClick={() => submitLinks(links, handle, pic)} className="w-fit my-5 px-4 py-2 text-[#770016] bg-[#e9c0ea] rounded-lg">Create your Linktree</button>
+              <button onClick={submitLinks} className="w-fit my-5 px-4 py-2 text-[#770016] bg-[#e9c0ea] rounded-lg">Create your Linktree</button>
             </span>
           </span>
           <ToastContainer />
@@ -135,5 +126,11 @@ const Generate = () => {
     </div>
   );
 };
+
+const Generate = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <GenerateContent />
+  </Suspense>
+);
 
 export default Generate;

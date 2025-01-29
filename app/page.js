@@ -1,5 +1,6 @@
 import Button from '@/components/Button'
 import Home from '@/components/Home'
+import Link from 'next/link'
 
 const Page = () => {
   return (
@@ -19,10 +20,12 @@ const Page = () => {
           </p>
 
           <div className="my-7">
-          <Button
-            title='Contact the developer'
-            style='btn_purple'
-          />
+            <Link href='https://instagram.com/_harshkaralia'>
+              <Button
+                title='Contact the developer'
+                style='btn_purple'
+              />
+            </Link>
           </div>
         </div>
       </section>
