@@ -17,7 +17,7 @@ export default async function Page({ params }) {
 
     return <div className="flex min-h-screen justify-center items-start pt-32">
         <div className="flex flex-col items-center justify-center gap-3">
-            <img src={item.pic} className="w-52 h-52 border-2" alt="" />
+            <img src={item.pic} className="w-52 h-52 border-2 rounded-full object-cover" alt="" />
             <span className="font-bold text-lg">@{item.handle}</span>
 
             {/* <p className="text-center max-w-80 text-black/70 font-light">Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptatum earum possimus quas.</p> */}
